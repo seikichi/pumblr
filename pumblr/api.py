@@ -42,7 +42,7 @@ class API(object):
 
 
     def _check_we_ll_be_back(self, text): # ;-p
-        if text.startswith('<!DOCTYPE html PUBLIC'):
+        if text.startswith('<!DOCTYPE html PUBLIC'): #TODO: これ微妙すぎるだろ
             raise PumblrError('We\'ll be back shortly!')
 
     def dashboard(self, start=0, num=20, type=None, likes=0):
@@ -103,3 +103,36 @@ class API(object):
         text = req.read()
         self._check_we_ll_be_back(text)
         return ApiRead.parse(json.loads(utils.extract_dict(text)))
+
+
+    def reblog(self, post_id, reblog_key, comment=None, reblog_as=None, group=None):
+        """
+        Reblogging post.
+        Arguments:
+        - `post_id`: The integer ID of the post to reblog.
+        - `reblog_key`: The corresponding reblog_key value from the post's read data.
+        - `comment`: Text, HTML, or Markdown string (see format) of the commentary added to the reblog.
+        - `reblog_as`: Reblog as a different format from the original post.
+        - `group`: Post this to a secondary blog on your account.
+        """
+
+        if not self._authenticated:
+            raise PumblrError("You are not authenticated yet.")
+
+        url = 'http://www.tumblr.com/api/reblog'
+        query = {
+            'email':self._email,
+            'password':self._password,
+            'post-id':post_id,
+        }
+        if comment is not None:
+            query['comment'] = comment
+        if reblog_as is not None:
+            query['as'] = reblog_as
+        if group is not None:
+            query['group'] = group
+
+        req = urllib2.urlopen(url, urlencode(query))
+        text = req.read()
+        self._check_we_ll_be_back(text)
+        print text
