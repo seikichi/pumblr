@@ -30,9 +30,9 @@ class API(object):
             req = urllib2.urlopen(url, urlencode(query))
             text = req.read()
         except urllib2.HTTPError, e:
-            if 403 == e.code:
+            if e.code == 403:
                 raise PumblrAuthError(str(e))
-            if 400 == e.code:
+            if e.code == 400:
                 raise PumblrRequestError(str(e))
         except Exception, e:
             raise PumblrError(str(e))
@@ -124,15 +124,24 @@ class API(object):
             'email':self._email,
             'password':self._password,
             'post-id':post_id,
+            'reblog-key':reblog_key
         }
         if comment is not None:
             query['comment'] = comment
         if reblog_as is not None:
             query['as'] = reblog_as
         if group is not None:
-            query['group'] = group
+            query['group'] = '%s.tumblr.com' % group
 
-        req = urllib2.urlopen(url, urlencode(query))
-        text = req.read()
-        self._check_we_ll_be_back(text)
-        print text
+        try:
+            urllib2.urlopen(url, urlencode(query))
+        except urllib2.HTTPError, e:
+            if e.code == 201:
+                return
+            if e.code == 403:
+                raise PumblrAuthError(str(e))
+            if e.code == 400:
+                raise PumblrRequestError(str(e))
+        except Exception, e:
+            raise PumblrError(str(e))
+        raise PumblrError('reblog failed.')
