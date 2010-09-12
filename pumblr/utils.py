@@ -5,6 +5,7 @@ import re
 import string
 import urllib
 
+
 def urlencode(query):
     """
     urlencode(remove key if value is None)
