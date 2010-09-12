@@ -45,6 +45,10 @@ class API(object):
         if text.startswith('<!DOCTYPE html PUBLIC'): #TODO: これ微妙すぎるだろ
             raise PumblrError('We\'ll be back shortly!')
 
+    def _auth_check(self):
+        if not self._authenticated:
+            raise PumblrError("You are not authenticated yet.")
+
     def dashboard(self, start=0, num=20, type=None, likes=0):
         """
         Dashboard reading.
@@ -53,8 +57,7 @@ class API(object):
         - `num`: The number of posts to return. The default is 20, and the maximum is 50.
         - `type`: The type of posts to return. If unspecified or empty, all types of posts are returned. Must be one of text, quote, photo, link, chat, video, or audio.
         """
-        if not self._authenticated:
-            raise PumblrError("You are not authenticated yet.")
+        self._auth_check()
 
         url = 'http://www.tumblr.com/api/dashboard/json'
         query = dict(
@@ -98,11 +101,50 @@ class API(object):
             if tagged is not None:
                 query['tagged'] = tagged
 
-        url = "http://%s.tumblr.com/api/read/json" % name
-        req = urllib2.urlopen(url+'?'+urlencode(query))
+        url = "http://%s.tumblr.com/api/read/json?%s" % (name, urlencode(query))
+        req = urllib2.urlopen(url)
         text = req.read()
         self._check_we_ll_be_back(text)
         return ApiRead.parse(json.loads(utils.extract_dict(text)))
+
+    def like(self, post_id, reblog_key):
+        """
+        Liking post.
+        Arguments:
+        - `post_id`: The integer ID of the post to reblog.
+        - `reblog_key`: The corresponding reblog_key value from the post's read data.
+        """
+        self._like_unlike(post_id, reblog_key, like=True)
+
+    def unlike(self, post_id, reblog_key):
+        """
+        Un-Liking post.
+        Arguments:
+        - `post_id`: The integer ID of the post to reblog.
+        - `reblog_key`: The corresponding reblog_key value from the post's read data.
+        """
+        self._like_unlike(post_id, reblog_key, like=False)
+
+    def _like_unlike(self, post_id, reblog_key, like):
+        self._auth_check()
+        url = 'http://www.tumblr.com/api/%s' % ('like' if like else 'unlike')
+        query = {
+            'email':self._email,
+            'password':self._password,
+            'post-id':post_id,
+            'reblog-key':reblog_key
+        }
+        try:
+            urllib2.urlopen(url, urlencode(query))
+        except urllib2.HTTPError, e:
+            if e.code == 404:
+                raise PumblrError('incorrect reblog-key')
+            if e.code == 403:
+                raise PumblrAuthError(str(e))
+            if e.code == 400:
+                raise PumblrRequestError(str(e))
+        except Exception, e:
+            raise PumblrError(str(e))
 
 
     def reblog(self, post_id, reblog_key, comment=None, reblog_as=None, group=None):
@@ -116,8 +158,7 @@ class API(object):
         - `group`: Post this to a secondary blog on your account.
         """
 
-        if not self._authenticated:
-            raise PumblrError("You are not authenticated yet.")
+        self._auth_check()
 
         url = 'http://www.tumblr.com/api/reblog'
         query = {
