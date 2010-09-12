@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 
 import utils
-from urllib import urlencode
 import urllib2
 import functools
 
@@ -18,10 +17,6 @@ class API(object):
         self._authenticated = False
         if email is not None and password is not None:
             self.auth(email, password)
-
-    def _add_param(self, query, key, val):
-        if val is not None:
-            query[key] = val
 
     def _check_we_ll_be_back(self, text): # ;-p
         if text.startswith('<!DOCTYPE html PUBLIC'): #TODO: これ微妙すぎるだろ
@@ -56,8 +51,7 @@ class API(object):
 
     def _read_json_data(self, url, data=None):
         """open url  and return json instance"""
-        req = urllib2.urlopen(url, data)
-        text = req.read()
+        text = urllib2.urlopen(url, data).read()
         self._check_we_ll_be_back(text)
         return json.loads(utils.extract_dict(text))
 
@@ -70,7 +64,7 @@ class API(object):
             email=self._email,
             password=self._password,
         )
-        text = self._check_status_code(url, urlencode(query))
+        text = self._check_status_code(url, utils.urlencode(query))
         self._check_we_ll_be_back(text)
         self._authenticated = True
 
@@ -89,10 +83,10 @@ class API(object):
             password=self._password,
             start=start,
             num=num,
-            likes=likes
+            likes=likes,
+            type=type
         )
-        self._add_param(query, 'type', type)
-        return ApiRead.parse(self._read_json_data(url, urlencode(query)))
+        return ApiRead.parse(self._read_json_data(url, utils.urlencode(query)))
 
     def read(self, name, start=0, num=20, type=None, id=None, search=None, tagged=None):
         """
@@ -111,12 +105,12 @@ class API(object):
         else:
             query = dict(
                 start=start,
-                num=num
+                num=num,
+                type=type,
+                search=search,
+                tagged=tagged
             )
-            self._add_param(query, 'type', type)
-            self._add_param(query, 'search', search)
-            self._add_param(query, 'tagged', tagged)
-        url = "http://%s.tumblr.com/api/read/json?%s" % (name, urlencode(query))
+        url = "http://%s.tumblr.com/api/read/json?%s" % (name, utils.urlencode(query))
         return ApiRead.parse(self._read_json_data(url))
 
     def like(self, post_id, reblog_key):
@@ -146,7 +140,7 @@ class API(object):
             'post-id':post_id,
             'reblog-key':reblog_key
         }
-        self._check_status_code(url, urlencode(query))
+        self._check_status_code(url, utils.urlencode(query))
 
     @_auth_check
     def reblog(self, post_id, reblog_key, comment=None, reblog_as=None, group=None):
@@ -159,16 +153,16 @@ class API(object):
         - `reblog_as`: Reblog as a different format from the original post.
         - `group`: Post this to a secondary blog on your account.
         """
+        if group is not None:
+            group = '%s.tumblr.com' % group
         url = 'http://www.tumblr.com/api/reblog'
         query = {
             'email':self._email,
             'password':self._password,
             'post-id':post_id,
-            'reblog-key':reblog_key
+            'reblog-key':reblog_key,
+            'group':group,
+            'comment':comment,
+            'as':reblog_as,
         }
-        self._add_param(query, 'comment', comment)
-        self._add_param(query, 'as', reblog_as)
-        if group is not None:
-            query['group'] = '%s.tumblr.com' % group
-
-        self._check_status_code(url, urlencode(query))
+        self._check_status_code(url, utils.urlencode(query))

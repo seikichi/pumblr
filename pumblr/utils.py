@@ -3,6 +3,24 @@
 
 import re
 import string
+import urllib
+
+def urlencode(query):
+    """
+    urlencode(remove key if value is None)
+    >>> urlencode(dict(a=1, b=2, c=None))
+    'a=1&b=2'
+    >>> urlencode(dict(aaaa=1000, c='hoge', a=None))
+    'aaaa=1000&c=hoge'
+    """
+    delkeys = []
+    for key, val in query.iteritems():
+        if val is None:
+            delkeys.append(key)
+    for key in delkeys:
+        query.pop(key)
+    return urllib.urlencode(query)
+
 
 def extract_dict(json):
     """
@@ -32,6 +50,10 @@ def make_variable_name(name):
 
 
 def import_json():
+    """
+    import json module and return the module
+    >>> json = import_json()
+    """
     try:
         import simplejson as json
     except ImportError:
