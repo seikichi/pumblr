@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-class PumblrError(object):
+class PumblrError(Exception):
     """Pumblr exception"""
     
     def __init__(self, msg):

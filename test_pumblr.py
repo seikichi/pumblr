@@ -6,6 +6,7 @@ import os
 import urllib2
 
 from pumblr.api import *
+from pumblr.errors import *
 from pumblr.models import *
 from pumblr.utils import *
 from nose.tools import *
@@ -63,5 +64,13 @@ def test_api():
     """test for pumblr/api.py"""
     api = API()
     urllib2.urlopen.set_data('read.json') # fake
-    api_read = api.read('seikichi.tumblr.com')
+    api_read = api.read('seikichi')
     assert_equal(api_read.tumblelog.description, u'わしの取得単位は108まであるぞ')
+
+    urllib2.urlopen.set_data('dashboard.json')
+    api.auth(email='seikichi@localhost', password='password') # ;-p
+    dashboard = api.dashboard()
+    assert_equal(dashboard.posts[0].id, 1104344180)
+
+    urllib2.urlopen.set_data('error.xhtml')
+    assert_raises(PumblrError, api.dashboard)
