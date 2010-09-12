@@ -4,6 +4,7 @@
 import utils
 from urllib import urlencode
 import urllib2
+import functools
 
 json = utils.import_json()
 from models import ApiRead
@@ -18,7 +19,50 @@ class API(object):
         if email is not None and password is not None:
             self.auth(email, password)
 
+    def _add_param(self, query, key, val):
+        if val is not None:
+            query[key] = val
+
+    def _check_we_ll_be_back(self, text): # ;-p
+        if text.startswith('<!DOCTYPE html PUBLIC'): #TODO: これ微妙すぎるだろ
+            raise PumblrError('We\'ll be back shortly!')
+
+    def _auth_check(func):
+        """check authenticate"""
+        @functools.wraps(func)
+        def wrapper(self, *args, **kw):
+            if not self._authenticated:
+                raise PumblrError("You are not authenticated yet.")
+            return func(self, *args, **kw)
+        return wrapper
+
+    def _check_status_code(self, url, data):
+        """POST to url(with data) and check HTTP status code"""
+        try:
+            req = urllib2.urlopen(url, data)
+            return req.read()
+        except urllib2.HTTPError, e:
+            if e.code == 200 or e.code == 201:
+                return # OK
+            if e.code == 404:
+                raise PumblrError('incorrect reblog-key')
+            if e.code == 403:
+                raise PumblrAuthError(str(e))
+            if e.code == 400:
+                raise PumblrRequestError(str(e))
+        except Exception, e:
+            raise PumblrError(str(e))
+        raise PumblrError('')
+
+    def _read_json_data(self, url, data=None):
+        """open url  and return json instance"""
+        req = urllib2.urlopen(url, data)
+        text = req.read()
+        self._check_we_ll_be_back(text)
+        return json.loads(utils.extract_dict(text))
+
     def auth(self, email, password):
+        """validate credentials"""
         self._email = email
         self._password = password
         url = 'http://www.tumblr.com/api/authenticate'
@@ -26,29 +70,11 @@ class API(object):
             email=self._email,
             password=self._password,
         )
-        try:
-            req = urllib2.urlopen(url, urlencode(query))
-            text = req.read()
-        except urllib2.HTTPError, e:
-            if e.code == 403:
-                raise PumblrAuthError(str(e))
-            if e.code == 400:
-                raise PumblrRequestError(str(e))
-        except Exception, e:
-            raise PumblrError(str(e))
-
+        text = self._check_status_code(url, urlencode(query))
         self._check_we_ll_be_back(text)
         self._authenticated = True
 
-
-    def _check_we_ll_be_back(self, text): # ;-p
-        if text.startswith('<!DOCTYPE html PUBLIC'): #TODO: これ微妙すぎるだろ
-            raise PumblrError('We\'ll be back shortly!')
-
-    def _auth_check(self):
-        if not self._authenticated:
-            raise PumblrError("You are not authenticated yet.")
-
+    @_auth_check
     def dashboard(self, start=0, num=20, type=None, likes=0):
         """
         Dashboard reading.
@@ -57,8 +83,6 @@ class API(object):
         - `num`: The number of posts to return. The default is 20, and the maximum is 50.
         - `type`: The type of posts to return. If unspecified or empty, all types of posts are returned. Must be one of text, quote, photo, link, chat, video, or audio.
         """
-        self._auth_check()
-
         url = 'http://www.tumblr.com/api/dashboard/json'
         query = dict(
             email=self._email,
@@ -67,13 +91,8 @@ class API(object):
             num=num,
             likes=likes
         )
-        if type is not None:
-            query['type'] = type
-
-        req = urllib2.urlopen(url, urlencode(query))
-        text = req.read()
-        self._check_we_ll_be_back(text)
-        return ApiRead.parse(json.loads(utils.extract_dict(text)))
+        self._add_param(query, 'type', type)
+        return ApiRead.parse(self._read_json_data(url, urlencode(query)))
 
     def read(self, name, start=0, num=20, type=None, id=None, search=None, tagged=None):
         """
@@ -94,18 +113,11 @@ class API(object):
                 start=start,
                 num=num
             )
-            if type is not None:
-                query['type'] = type
-            if search is not None:
-                query['search'] = search
-            if tagged is not None:
-                query['tagged'] = tagged
-
+            self._add_param(query, 'type', type)
+            self._add_param(query, 'search', search)
+            self._add_param(query, 'tagged', tagged)
         url = "http://%s.tumblr.com/api/read/json?%s" % (name, urlencode(query))
-        req = urllib2.urlopen(url)
-        text = req.read()
-        self._check_we_ll_be_back(text)
-        return ApiRead.parse(json.loads(utils.extract_dict(text)))
+        return ApiRead.parse(self._read_json_data(url))
 
     def like(self, post_id, reblog_key):
         """
@@ -125,8 +137,8 @@ class API(object):
         """
         self._like_unlike(post_id, reblog_key, like=False)
 
+    @_auth_check
     def _like_unlike(self, post_id, reblog_key, like):
-        self._auth_check()
         url = 'http://www.tumblr.com/api/%s' % ('like' if like else 'unlike')
         query = {
             'email':self._email,
@@ -134,19 +146,9 @@ class API(object):
             'post-id':post_id,
             'reblog-key':reblog_key
         }
-        try:
-            urllib2.urlopen(url, urlencode(query))
-        except urllib2.HTTPError, e:
-            if e.code == 404:
-                raise PumblrError('incorrect reblog-key')
-            if e.code == 403:
-                raise PumblrAuthError(str(e))
-            if e.code == 400:
-                raise PumblrRequestError(str(e))
-        except Exception, e:
-            raise PumblrError(str(e))
+        self._check_status_code(url, urlencode(query))
 
-
+    @_auth_check
     def reblog(self, post_id, reblog_key, comment=None, reblog_as=None, group=None):
         """
         Reblogging post.
@@ -157,9 +159,6 @@ class API(object):
         - `reblog_as`: Reblog as a different format from the original post.
         - `group`: Post this to a secondary blog on your account.
         """
-
-        self._auth_check()
-
         url = 'http://www.tumblr.com/api/reblog'
         query = {
             'email':self._email,
@@ -167,22 +166,9 @@ class API(object):
             'post-id':post_id,
             'reblog-key':reblog_key
         }
-        if comment is not None:
-            query['comment'] = comment
-        if reblog_as is not None:
-            query['as'] = reblog_as
+        self._add_param(query, 'comment', comment)
+        self._add_param(query, 'as', reblog_as)
         if group is not None:
             query['group'] = '%s.tumblr.com' % group
 
-        try:
-            urllib2.urlopen(url, urlencode(query))
-        except urllib2.HTTPError, e:
-            if e.code == 201:
-                return
-            if e.code == 403:
-                raise PumblrAuthError(str(e))
-            if e.code == 400:
-                raise PumblrRequestError(str(e))
-        except Exception, e:
-            raise PumblrError(str(e))
-        raise PumblrError('reblog failed.')
+        self._check_status_code(url, urlencode(query))
