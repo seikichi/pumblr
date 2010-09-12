@@ -16,7 +16,7 @@ class PumblrAuthError(PumblrError):
     pass
 
 
-class PumblrReqestError(PumblrError):
+class PumblrRequestError(PumblrError):
     """400 Bad Request exception"""
     pass
 

@@ -7,7 +7,7 @@ import urllib2
 
 json = utils.import_json()
 from models import ApiRead
-from errors import PumblrError
+from errors import PumblrError, PumblrAuthError, PumblrRequestError
 
 
 class API(object):
@@ -21,13 +21,38 @@ class API(object):
     def auth(self, email, password):
         self._email = email
         self._password = password
+        url = 'http://www.tumblr.com/api/authenticate'
+        query = dict(
+            email=self._email,
+            password=self._password,
+        )
+        try:
+            req = urllib2.urlopen(url, urlencode(query))
+            text = req.read()
+        except urllib2.HTTPError, e:
+            if 403 == e.code:
+                raise PumblrAuthError(str(e))
+            if 400 == e.code:
+                raise PumblrRequestError(str(e))
+        except Exception, e:
+            raise PumblrError(str(e))
+
+        self._check_we_ll_be_back(text)
         self._authenticated = True
+
 
     def _check_we_ll_be_back(self, text): # ;-p
         if text.startswith('<!DOCTYPE html PUBLIC'):
             raise PumblrError('We\'ll be back shortly!')
 
-    def dashboard(self):
+    def dashboard(self, start=0, num=20, type=None, likes=0):
+        """
+        Dashboard reading.
+        Arguments:
+        - `start`: The post offset to start from. The default is 0.
+        - `num`: The number of posts to return. The default is 20, and the maximum is 50.
+        - `type`: The type of posts to return. If unspecified or empty, all types of posts are returned. Must be one of text, quote, photo, link, chat, video, or audio.
+        """
         if not self._authenticated:
             raise PumblrError("You are not authenticated yet.")
 
@@ -35,16 +60,21 @@ class API(object):
         query = dict(
             email=self._email,
             password=self._password,
+            start=start,
+            num=num,
+            likes=likes
         )
+        if type is not None:
+            query['type'] = type
 
         req = urllib2.urlopen(url, urlencode(query))
         text = req.read()
-        print text
         self._check_we_ll_be_back(text)
         return ApiRead.parse(json.loads(utils.extract_dict(text)))
 
     def read(self, name, start=0, num=20, type=None, id=None, search=None, tagged=None):
         """
+        Reading Tumblr data.
         Arguments:
         - `name`: username
         - `start`: The post offset to start from. The default is 0.
