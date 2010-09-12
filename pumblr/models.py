@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+from utils import make_variable_name
+
 class Model(object):
 
     def __init__(self):
@@ -19,11 +21,11 @@ class ApiRead(Model):
         apiread = kls()
         for key, value in json.iteritems():
             if key == 'tumblelog':
-                setattr(apiread, key, TumbleLog.parse(value))
+                setattr(apiread, make_variable_name(key), TumbleLog.parse(value))
             elif key == 'posts':
-                setattr(apiread, key, [Post.parse(p) for p in value])
+                setattr(apiread, make_variable_name(key), [Post.parse(p) for p in value])
             else:
-                setattr(apiread, key, value)
+                setattr(apiread, make_variable_name(key), value)
         return apiread
 
 
@@ -33,7 +35,7 @@ class TumbleLog(Model):
     def parse(kls, json):
         tumblelog = kls()
         for key, value in json.iteritems():
-            setattr(tumblelog, key, value)
+            setattr(tumblelog, make_variable_name(key), value)
         return tumblelog
 
 
@@ -44,7 +46,7 @@ class Post(Model):
         post = kls()
         for key, value in json.iteritems():
             if key == 'tumblelog':
-                setattr(post, key, TumbleLog.parse(value))
+                setattr(post, make_variable_name(key), TumbleLog.parse(value))
             else:
-                setattr(post, key, value)
+                setattr(post, make_variable_name(key), value)
         return post
