@@ -48,6 +48,6 @@ def test_all():
     assert_equal(0, len(filter(lambda p: p.type!='photo', dashboard_data.posts)))
 
     # reblog
-    post = dashboard_data.posts[0]
-    pumblr.api.reblog(post.id, post.reblog_key, group='se-kichi')
-    new_post = pumblr.api.read('se-kichi', num=1).posts[0]
+    # post = dashboard_data.posts[0]
+    # pumblr.api.reblog(post.id, post.reblog_key, group='se-kichi')
+    # new_post = pumblr.api.read('se-kichi', num=1).posts[0]

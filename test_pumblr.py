@@ -33,7 +33,7 @@ class StubURLOpen(object):
 
     def __init__(self, *args, **kw):
         """don't care"""
-        pass
+        self._error = False
 
     def set_data(self, filename):
         class _Ret(object):
@@ -45,7 +45,13 @@ class StubURLOpen(object):
 
         self._ret = _Ret(read_data(filename))
 
+    def set_error_code(self, code):
+        self._error = True
+        self._code = code
+
     def __call__(self, *args, **kw):
+        if self._error:
+            raise urllib2.HTTPError('', self._code, '', None, None)
         return self._ret
 
 
@@ -60,7 +66,7 @@ def unpatch_urllib2():
 
 
 @with_setup(patch_urllib2, unpatch_urllib2)
-def test_api():
+def test_api_read():
     """test for pumblr/api.py"""
     api = API()
     urllib2.urlopen.set_data('read.json') # fake
@@ -74,3 +80,38 @@ def test_api():
 
     urllib2.urlopen.set_data('error.xhtml')
     assert_raises(PumblrError, api.dashboard)
+
+
+@with_setup(patch_urllib2, unpatch_urllib2)
+def test_api_auth():
+    api = API()
+    assert_raises(PumblrError, api.dashboard)
+    assert_raises(PumblrError, api.like, 0, 0)
+    assert_raises(PumblrError, api.unlike, 0, 0)
+    assert_raises(PumblrError, api.reblog, 0, 0)
+
+
+@with_setup(patch_urllib2, unpatch_urllib2)
+def test_error_code():
+    api = API()
+    urllib2.urlopen.set_data('dashboard.json') # dummy
+    api.auth(email='seikichi@localhost', password='password') # ;-p
+    urllib2.urlopen.set_error_code(403)
+    assert_raises(PumblrAuthError, api.like, 0, 0)
+    urllib2.urlopen.set_error_code(400)
+    assert_raises(PumblrRequestError, api.like, 0, 0)
+    urllib2.urlopen.set_error_code(403)
+    assert_raises(PumblrAuthError, api.unlike, 0, 0)
+    urllib2.urlopen.set_error_code(400)
+    assert_raises(PumblrRequestError, api.unlike, 0, 0)
+    urllib2.urlopen.set_error_code(404)
+    assert_raises(PumblrError, api.reblog, 0, 0)
+
+
+@with_setup(patch_urllib2, unpatch_urllib2)
+def test_api_write():
+    api = API()
+    urllib2.urlopen.set_data('dashboard.json') # dummy
+    api.auth(email='seikichi@localhost', password='password') # ;-p
+    urllib2.urlopen.set_error_code(201)
+    api.write_quote(quote='ほげふがー', type='quote')
