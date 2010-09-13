@@ -59,6 +59,7 @@ class API(object):
         """validate credentials"""
         self._email = email
         self._password = password
+        self._authenticated = False
         url = 'http://www.tumblr.com/api/authenticate'
         query = dict(
             email=self._email,
