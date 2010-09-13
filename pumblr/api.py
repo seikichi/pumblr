@@ -19,7 +19,7 @@ class API(object):
             self.auth(email, password)
 
     def _check_we_ll_be_back(self, text): # ;-p
-        if text.startswith('<!DOCTYPE html PUBLIC'): #TODO: これ微妙すぎるだろ
+        if text.startswith('<!DOCTYPE html PUBLIC'): #TODO: not cool...
             raise PumblrError('We\'ll be back shortly!')
 
     def _auth_check(func):
@@ -50,7 +50,7 @@ class API(object):
         raise PumblrError('')
 
     def _read_json_data(self, url, data=None):
-        """open url  and return json instance"""
+        """open url and return json instance"""
         text = urllib2.urlopen(url, data).read()
         self._check_we_ll_be_back(text)
         return json.loads(utils.extract_dict(text))
@@ -76,6 +76,7 @@ class API(object):
         - `start`: The post offset to start from. The default is 0.
         - `num`: The number of posts to return. The default is 20, and the maximum is 50.
         - `type`: The type of posts to return. If unspecified or empty, all types of posts are returned. Must be one of text, quote, photo, link, chat, video, or audio.
+        - `likes`: (optional) 1 or 0, default 0. If 1, liked posts will have the liked="true" attribute.
         """
         url = 'http://www.tumblr.com/api/dashboard/json'
         query = dict(
@@ -95,7 +96,7 @@ class API(object):
         - `name`: username
         - `start`: The post offset to start from. The default is 0.
         - `num`: The number of posts to return. The default is 20, and the maximum is 50.
-        - `type`: The type of posts to return. If unspecified or empty, all types of posts are returned. Must be one of text, quote, photo, link, chat, video, or audio.
+        - `type`: (optional) The type of posts to return. If unspecified or empty, all types of posts are returned. Must be one of text, quote, photo, link, chat, video, or audio.
         - `id`: A specific post ID to return. Use instead of start, num, or type.
         - `search`: Search for posts with this query.
         - `tagged`: Return posts with this tag in reverse-chronological order (newest first).
@@ -117,8 +118,8 @@ class API(object):
         """
         Liking post.
         Arguments:
-        - `post_id`: The integer ID of the post to reblog.
-        - `reblog_key`: The corresponding reblog_key value from the post's read data.
+        - `post_id`: The numeric post ID to like.
+        - `reblog_key`: he reblog-key value for the specified post from read or dashboard method.
         """
         self._like_unlike(post_id, reblog_key, like=True)
 
@@ -126,8 +127,8 @@ class API(object):
         """
         Un-Liking post.
         Arguments:
-        - `post_id`: The integer ID of the post to reblog.
-        - `reblog_key`: The corresponding reblog_key value from the post's read data.
+        - `post_id`: The numeric post ID to like.
+        - `reblog_key`: he reblog-key value for the specified post from read or dashboard method.
         """
         self._like_unlike(post_id, reblog_key, like=False)
 
@@ -149,9 +150,9 @@ class API(object):
         Arguments:
         - `post_id`: The integer ID of the post to reblog.
         - `reblog_key`: The corresponding reblog_key value from the post's read data.
-        - `comment`: Text, HTML, or Markdown string (see format) of the commentary added to the reblog.
-        - `reblog_as`: Reblog as a different format from the original post.
-        - `group`: Post this to a secondary blog on your account.
+        - `comment`: (optional) Text, HTML, or Markdown string (see format) of the commentary added to the reblog.
+        - `reblog_as`: (optional) Reblog as a different format from the original post.
+        - `group`: (optional) Post this to a secondary blog on your account.
         """
         if group is not None:
             group = '%s.tumblr.com' % group
@@ -171,7 +172,8 @@ class API(object):
     def delete(self, post_id):
         """
         Deleting post
-        `post_id` - The integer ID of the post you wish to delete.
+        Arguments:
+        - `post_id`: The integer ID of the post you wish to delete.
         """
         url = 'http://www.tumblr.com/api/delete'
         query = {'email':self._email, 'password':self._password, 'post-id':post_id}
@@ -208,7 +210,7 @@ class API(object):
         """
         Quote Arguments:
         - `quote`:
-        - `source`:
+        - `source`:(optional, HTML allowed)
         """
         return dict(type='quote', quote=quote, source=source)
 
@@ -218,7 +220,7 @@ class API(object):
         """
         Regular Arguments:
         - `title`:
-        - `body`:
+        - `body`:(HTML allowed)
         """
         return dict(type='regular', title=title, body=body)
 
@@ -227,29 +229,37 @@ class API(object):
     def write_link(self, url, name=None, description=None):
         """
         Link Arguments:
-        - `name`:
         - `url`:
-        - `description`
+        - `name`:(optional)
+        - `description`:(optional, HTML allowed)
         """
         return dict(type='link', url=url, name=name, description=description)
 
     @_auth_check
     @_write
-    def write_photo(self, source, data, caption=None, click_through_url=None):
+    def write_photo(self, source=None, data=None, caption=None, click_through_url=None):
         """
+        Requires either source or data, but not both. If both are specified, source is used.
         Photo Arguments:
-        - `source`:
-        - `data`:
-        - `caption`
-        - `click_through_url`
+        - `source`: The URL of the photo to copy. This must be a web-accessible URL, not a local file or intranet location.
+        - `data`: An image file.
+        - `caption`:(optional, HTML allowed)
+        - `click_through_url`: (optional)
         """
-        return {
+        query = {
             'type':'photo',
-            'source':source,
-            'data':data,
             'caption':caption,
             'click-through-url':click_through_url
         }
+
+        if source is not None:
+            query['source'] = source
+        elif data is not None:
+            query['data'] = data
+        else:
+            raise PumblrError('write photo requires either source or data')
+
+        return query
 
     @_auth_check
     @_write
@@ -257,7 +267,7 @@ class API(object):
         """
         Conversation Arguments:
         - `conversation`:
-        - `title`:
+        - `title`:(optional)
         """
         return dict(
             type='conversation',
@@ -270,9 +280,9 @@ class API(object):
     def write_audio(self, data='', externally_hosted_url=None, caption=None):
         """
         Arguments:
-        - `data`:
-        - `externally_hosted_url`:
-        - `caption`:
+        - `data`: An audio file. Must be MP3 or AIFF format.
+        - `externally_hosted_url`: (optional, replaces data)
+        - `caption`: (optional, HTML allowed)
         """
         query = dict(type='audio', caption=caption)
         if externally_hosted_url is not None:
@@ -286,8 +296,8 @@ class API(object):
     def write_video(self, embed, caption):
         """
         Arguments:
-        - `embed`:
-        - `caption`:
+        - `embed`: Either the complete HTML code to embed the video, or the URL of a YouTube video page.
+        - `caption`: (optional, HTML allowed)
         """
         return dict(
             type='video',
