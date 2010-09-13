@@ -32,7 +32,9 @@ Usage
   >>> import pumblr
   >>> data = pumblr.api.read('seikichi') # seikichi.tumblr.com
   >>> print data.posts[0].type
-
+  >>> pumblr.api.auth(email='hoge@fuga', password='password')
+  >>> data = pumblr.api.dashboard()
+  >>> pumblr.api.write_quote(quote='myo---n')
 
 |
 |
