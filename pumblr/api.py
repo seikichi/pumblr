@@ -174,7 +174,7 @@ class API(object):
         Arguments:
         - `generator`: A short description of the application
         - `group`: Post this to a secondary blog on your account
-        \n\n
+        \n
             """
             url = 'http://www.tumblr.com/api/write'
             if group is not None: group = '%s.tumblr.com' % group
@@ -211,3 +211,32 @@ class API(object):
         - `body`:
         """
         return dict(type='regular', title=title, body=body)
+
+    @_write
+    @_auth_check
+    def write_link(self, url, name=None, description=None):
+        """
+        Link Arguments:
+        - `name`:
+        - `url`:
+        - `description`
+        """
+        return dict(type='link', url=url, name=name, description=description)
+
+    @_write
+    @_auth_check
+    def write_photo(self, source, data, caption=None, click_through_url=None):
+        """
+        Photo Arguments:
+        - `source`:
+        - `data`:
+        - `caption`
+        - `click_through_url`
+        """
+        return {
+            'type':'photo',
+            'source':source,
+            'data':data,
+            'caption':caption,
+            'click-through-url':click_through_url
+        }
