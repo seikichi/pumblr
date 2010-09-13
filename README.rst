@@ -14,6 +14,13 @@ Requirements
 How to Install?
 ---------------
 
+easy_install
+++++++++++++
+::
+
+  $ easy_install pumblr
+
+
 setuptools
 ++++++++++
 ::
