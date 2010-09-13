@@ -166,3 +166,48 @@ class API(object):
             'as':reblog_as,
         }
         self._check_status_code(url, utils.urlencode(query))
+
+    def _write(f):
+        def _wrapper(self, generator='pumblr', group=None, **kw):
+            """
+        Write API.
+        Arguments:
+        - `generator`: A short description of the application
+        - `group`: Post this to a secondary blog on your account
+        \n\n
+            """
+            url = 'http://www.tumblr.com/api/write'
+            if group is not None: group = '%s.tumblr.com' % group
+            query = dict(
+                email=self._email,
+                password=self._password,
+                generator=generator,
+                group=group
+            )
+            query.update(f(self, **kw))
+            if not 'type' in query.keys():
+                raise PumblrError('post type is needed!')
+            self._check_status_code(url, utils.urlencode(query))
+
+        _wrapper.__doc__ += f.__doc__
+        return _wrapper
+
+    @_write
+    @_auth_check
+    def write_quote(self, quote, source=None):
+        """
+        Quote Arguments:
+        - `quote`:
+        - `source`:
+        """
+        return dict(type='quote', quote=quote, source=source)
+
+    @_write
+    @_auth_check
+    def write_regular(self, title, body):
+        """
+        Regular Arguments:
+        - `title`:
+        - `body`:
+        """
+        return dict(type='regular', title=title, body=body)

@@ -113,5 +113,7 @@ def test_api_write():
     api = API()
     urllib2.urlopen.set_data('dashboard.json') # dummy
     api.auth(email='seikichi@localhost', password='password') # ;-p
+
     urllib2.urlopen.set_error_code(201)
-    api.write_quote(quote='ほげふがー', type='quote')
+    api.write_quote(quote='ほげふがー', source='pyo------')
+    api.write_regular(title='みょーーん', body='はいはいワロスワロス')
