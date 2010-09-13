@@ -89,6 +89,9 @@ def test_api_auth():
     assert_raises(PumblrError, api.like, 0, 0)
     assert_raises(PumblrError, api.unlike, 0, 0)
     assert_raises(PumblrError, api.reblog, 0, 0)
+    assert_raises(PumblrError, api.write_quote, {'quote':'hoge'})
+    assert_raises(PumblrError, api.write_regular, {'title':'hoge', 'body':'fuga'})
+    assert_raises(PumblrError, api.write_link, {'url':'http://localhost', 'name':'見ろ人がゴミのようだ', 'description':'うおー'})
 
 
 @with_setup(patch_urllib2, unpatch_urllib2)
@@ -109,6 +112,15 @@ def test_error_code():
 
 
 @with_setup(patch_urllib2, unpatch_urllib2)
+def test_api_delete():
+    api = API()
+    urllib2.urlopen.set_data('dashboard.json') # dummy
+    api.auth(email='seikichi@localhost', password='password') # ;-p
+    urllib2.urlopen.set_error_code(201)
+    api.delete(123456789)
+
+
+@with_setup(patch_urllib2, unpatch_urllib2)
 def test_api_write():
     api = API()
     urllib2.urlopen.set_data('dashboard.json') # dummy
@@ -117,3 +129,9 @@ def test_api_write():
     urllib2.urlopen.set_error_code(201)
     api.write_quote(quote='ほげふがー', source='pyo------')
     api.write_regular(title='みょーーん', body='はいはいワロスワロス')
+    api.write_quote(quote='hoge')
+    api.write_regular(title='hoge', body='fuga')
+    api.write_link(url='http://localhost', name='見ろ人がゴミのようだ', description='うおー')
+    api.write_conversation(conversation='うおー', title='書くの飽きてきた')
+    api.write_audio(externally_hosted_url='書く意味あるのかなーと思わんでもない', caption='壁殴り代行始めました')
+    api.write_video(embed='<object width="640" height="385"><param name="movie" value="http://www.youtube.com/v/Pqisib2bAb8?fs=1&amp;hl=ja_JP"></param><param name="allowFullScreen" value="true"></param><param name="allowscriptaccess" value="always"></param><embed src="http://www.youtube.com/v/Pqisib2bAb8?fs=1&amp;hl=ja_JP" type="application/x-shockwave-flash" allowscriptaccess="always" allowfullscreen="true" width="640" height="385"></embed></object>', caption='あらぶるてんしんらんまんの何とか')

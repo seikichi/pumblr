@@ -167,6 +167,16 @@ class API(object):
         }
         self._check_status_code(url, utils.urlencode(query))
 
+    @_auth_check
+    def delete(self, post_id):
+        """
+        Deleting post
+        `post_id` - The integer ID of the post you wish to delete.
+        """
+        url = 'http://www.tumblr.com/api/delete'
+        query = {'email':self._email, 'password':self._password, 'post-id':post_id}
+        self._check_status_code(url, utils.urlencode(query))
+
     def _write(f):
         def _wrapper(self, generator='pumblr', group=None, **kw):
             """
@@ -192,8 +202,8 @@ class API(object):
         _wrapper.__doc__ += f.__doc__
         return _wrapper
 
-    @_write
     @_auth_check
+    @_write
     def write_quote(self, quote, source=None):
         """
         Quote Arguments:
@@ -202,8 +212,8 @@ class API(object):
         """
         return dict(type='quote', quote=quote, source=source)
 
-    @_write
     @_auth_check
+    @_write
     def write_regular(self, title, body):
         """
         Regular Arguments:
@@ -212,8 +222,8 @@ class API(object):
         """
         return dict(type='regular', title=title, body=body)
 
-    @_write
     @_auth_check
+    @_write
     def write_link(self, url, name=None, description=None):
         """
         Link Arguments:
@@ -223,8 +233,8 @@ class API(object):
         """
         return dict(type='link', url=url, name=name, description=description)
 
-    @_write
     @_auth_check
+    @_write
     def write_photo(self, source, data, caption=None, click_through_url=None):
         """
         Photo Arguments:
@@ -240,3 +250,47 @@ class API(object):
             'caption':caption,
             'click-through-url':click_through_url
         }
+
+    @_auth_check
+    @_write
+    def write_conversation(self, conversation, title=None):
+        """
+        Conversation Arguments:
+        - `conversation`:
+        - `title`:
+        """
+        return dict(
+            type='conversation',
+            conversation=conversation,
+            title=title
+        )
+
+    @_auth_check
+    @_write
+    def write_audio(self, data='', externally_hosted_url=None, caption=None):
+        """
+        Arguments:
+        - `data`:
+        - `externally_hosted_url`:
+        - `caption`:
+        """
+        query = dict(type='audio', caption=caption)
+        if externally_hosted_url is not None:
+            query['externally-hosted-url'] = externally_hosted_url
+        else:
+            query['data'] = data
+        return query
+
+    @_auth_check
+    @_write
+    def write_video(self, embed, caption):
+        """
+        Arguments:
+        - `embed`:
+        - `caption`:
+        """
+        return dict(
+            type='video',
+            embed=embed,
+            caption=caption
+        )
