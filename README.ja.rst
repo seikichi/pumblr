@@ -4,7 +4,8 @@ pumblr
 
 What's this?
 ------------
-A python library for The Tumblr API.
+Tumblr APIのためのライブラリ．
+
 
 Requirements
 ------------
@@ -25,27 +26,27 @@ Usage
 -----
 ::
 
-  # import
+  # モジュールのインポート
   >>> import pumblr
 
-  # read user post (/api/read)
-  # to read 'seikichi.tumblr.com',
+  # 特定のユーザーのpostを読む (/api/read)
+  # seikichi.tumblr.comの場合は
   >>> data = pumblr.api.read('seikichi')
 
-  # authenticate (/api/authenticate)
+  # 認証を行う (/api/authenticate)
   >>> pumblr.api.auth(email='hoge@fuga', password='password')
 
-  # write quote (/api/write)
+  # quoteを書き込む (/api/write)
   >>> pumblr.api.write_quote(quote='myo---n')
 
-  # read dashboard (/api/dashboard)
+  # dashboardを読む (/api/dashboard)
   >>> data = pumblr.api.dashboard()
   >>> p = data.posts[0]
 
-  # liking post(/api/like) (unliking is similar)
+  # likeを付ける (/api/like) (unlikeも同様)
   >>> pumblr.api.like(post_id=p.id, reblog_key=p.reblog_key)
 
-  # reblogging post(/api/reblog)
+  # reblogする (/api/reblog)
   >>> pumblr.api.reblog(post_id=p.id, reblog_key=p.reblog_key)
 
 
