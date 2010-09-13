@@ -8,7 +8,12 @@ setup(name='pumblr',
       description="A python library for The Tumblr API.",
       long_description="""\
 """,
-      classifiers=[], # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
+      classifiers=[
+          'Development Status :: 3 - Alpha',
+          'Intended Audience :: Developers',
+          'License :: OSI Approved :: MIT License',
+          'Programming Language :: Python',
+      ],
       keywords='tumblr',
       author='seikichi',
       author_email='seikichi@kmc.gr.jp',
