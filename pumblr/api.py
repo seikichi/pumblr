@@ -181,12 +181,16 @@ class API(object):
         self._check_status_code(url, utils.urlencode(query))
 
     def _write(f):
-        def _wrapper(self, generator='pumblr', group=None, **kw):
+        def _wrapper(self, generator='pumblr', group=None, date=None, private=0, tags=None, slug=None, **kw):
             """
         Write API.
         Arguments:
         - `generator`: A short description of the application
         - `group`: Post this to a secondary blog on your account
+        - `date`: (optional) - The post date
+        - `private`: (optional) 1 or 0. Whether the post is private.
+        - `tags`: (optional) Comma-separated list of post tags.
+        - `slug`: (optional) A custom string to appear in the post's URL
         \n
             """
             url = 'http://www.tumblr.com/api/write'
@@ -195,7 +199,11 @@ class API(object):
                 email=self._email,
                 password=self._password,
                 generator=generator,
-                group=group
+                group=group,
+                date=date,
+                private=private,
+                tags=tags,
+                slug=slug
             )
             query.update(f(self, **kw))
             if not 'type' in query.keys():
