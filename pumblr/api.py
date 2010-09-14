@@ -112,7 +112,9 @@ class API(object):
                 search=search,
                 tagged=tagged
             )
-        url = "http://%s.tumblr.com/api/read/json?%s" % (name, utils.urlencode(query))
+        url = ("http://%s/api/read/json?%s" %
+               ((name if '.' in name else '%s.tumblr.com' % name), utils.urlencode(query)))
+        # url = "http://%s.tumblr.com/api/read/json?%s" % (name, utils.urlencode(query))
         return ApiRead.parse(self._read_json_data(url))
 
     def like(self, post_id, reblog_key):
@@ -156,7 +158,7 @@ class API(object):
         - `group`: (optional) Post this to a secondary blog on your account.
         """
         if group is not None:
-            group = '%s.tumblr.com' % group
+            group = group if '.' in group else '%s.tumblr.com' % group
         url = 'http://www.tumblr.com/api/reblog'
         query = {
             'email':self._email,
@@ -194,7 +196,8 @@ class API(object):
         \n
             """
             url = 'http://www.tumblr.com/api/write'
-            if group is not None: group = '%s.tumblr.com' % group
+            if group is not None:
+                group = group if '.' in group else '%s.tumblr.com' % group
             query = dict(
                 email=self._email,
                 password=self._password,
