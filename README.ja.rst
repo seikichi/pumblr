@@ -35,7 +35,7 @@ Usage
 
   # 特定のユーザーのpostを読む (/api/read)
   # seikichi.tumblr.comの場合は
-  >>> data = pumblr.api.read('seikichi')
+  >>> data = pumblr.api.read('seikichi') # 'seikichi.tumblr.com' でも可
 
   # 認証を行う (/api/authenticate)
   >>> pumblr.api.auth(email='hoge@fuga', password='password')

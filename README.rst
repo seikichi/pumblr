@@ -37,7 +37,7 @@ Usage
 
   # read user post (/api/read)
   # to read 'seikichi.tumblr.com',
-  >>> data = pumblr.api.read('seikichi')
+  >>> data = pumblr.api.read('seikichi') # 'seikichi.tumblr.com' is also valid
 
   # authenticate (/api/authenticate)
   >>> pumblr.api.auth(email='hoge@fuga', password='password')
@@ -49,10 +49,10 @@ Usage
   >>> data = pumblr.api.dashboard()
   >>> p = data.posts[0]
 
-  # liking post(/api/like) (unliking is similar)
+  # liking post (/api/like) (unliking is similar)
   >>> pumblr.api.like(post_id=p.id, reblog_key=p.reblog_key)
 
-  # reblogging post(/api/reblog)
+  # reblogging post (/api/reblog)
   >>> pumblr.api.reblog(post_id=p.id, reblog_key=p.reblog_key)
 
 
