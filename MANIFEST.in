@@ -1,0 +1,6 @@
+include README.rst
+include README.ja.rst
+include LICENSE
+include MANIFEST.in
+include testdata/*
+recursive-include *.py
