@@ -25,7 +25,7 @@ setuptools
 ++++++++++
 ::
 
-  $ python setup.py install (run as admin/root)
+  $ python setup.py install # (run as admin/root)
 
 
 Usage
@@ -40,32 +40,30 @@ Usage
   >>> data = pumblr.api.read('seikichi') # 'seikichi.tumblr.com' is also valid
 
   # authenticate (/api/authenticate)
-  >>> pumblr.api.auth(email='hoge@fuga', password='password')
+  >>> api = pumblr.API(email='hoge@fuga', password='password') # or try pumblr.api.auth
 
   # write quote (/api/write)
-  >>> pumblr.api.write_quote(quote='myo---n')
+  >>> api.write_quote(quote='myo---n')
 
   # read dashboard (/api/dashboard)
-  >>> data = pumblr.api.dashboard()
+  >>> data = api.dashboard()
   >>> p = data.posts[0]
 
   # liking post (/api/like) (unliking is similar)
-  >>> pumblr.api.like(post_id=p.id, reblog_key=p.reblog_key)
+  >>> api.like(post_id=p.id, reblog_key=p.reblog_key)
 
   # reblogging post (/api/reblog)
-  >>> pumblr.api.reblog(post_id=p.id, reblog_key=p.reblog_key)
+  >>> api.reblog(post_id=p.id, reblog_key=p.reblog_key)
 
-
-Other
------
 not implemented yet
-+++++++++++++++++++
+-------------------
 * Liked posts (api/likes)
 * Pages reading (api/pages)
 * Editing posts (api/write)
 
-|
-| Author: seikichi
-| License: MIT
-| Mail: seikichi[at]kmc.gr.jp
+Other
+-----
+* Author: seikichi
+* License: MIT
+* Mail: seikichi[at]kmc.gr.jp
 
